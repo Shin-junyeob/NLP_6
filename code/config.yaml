@@ -47,13 +47,13 @@ training:
   per_device_eval_batch_size: 32
   per_device_train_batch_size: 50
   predict_with_generate: true
-  report_to: wandb
+  report_to:
+  - wandb
   save_strategy: epoch
   save_total_limit: 5
   seed: 42
   warmup_ratio: 0.1
   weight_decay: 0.01
 wandb:
-  entity: sizin4340-personal
-  name: nlprun
-  project: nlp6
+  name: baseline_model
+  project: nlp_project
