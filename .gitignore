@@ -299,3 +299,9 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.toptal.com/developers/gitignore/api/python,visualstudiocode,vim,jupyternotebooks,windows,git,macos
+
+
+# Custom
+data/
+outputs/*
+!outputs/prediction/
