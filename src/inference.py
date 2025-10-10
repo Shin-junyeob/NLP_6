@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from config import config_info
-from preprocess import Preprocess, prepare_test_dataset
+from preprocess import Preprocess, prepare_test_dataset, postprocess_summaries
 from model import load_tokenizer_and_model_for_test
 from train import train
 
@@ -46,6 +46,7 @@ def main(config):
     preprocessed_summary = summary.copy()
     for token in remove_tokens:
         preprocessed_summary = [sentence.replace(token, " ") for sentence in preprocessed_summary]
+    preprocessed_summary = postprocess_summaries(preprocessed_summary)
 
     output = pd.DataFrame(
         {

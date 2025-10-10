@@ -15,7 +15,7 @@ def config_info():
                 "output_dir": f"./outputs/checkpoints/{MODEL_NAME}/"
             },
             "tokenizer": {
-                "encoder_max_len": 512,
+                "encoder_max_len": 768,
                 "decoder_max_len": 100,
                 "bos_token": f"{tokenizer.bos_token}",
                 "eos_token": f"{tokenizer.eos_token}",
@@ -57,10 +57,11 @@ def config_info():
             "inference": {
                 "ckpt_path": f"./outputs/checkpoints/{MODEL_NAME}",
                 "result_path": f"./outputs/prediction/{MODEL_NAME}/",
-                "no_repeat_ngram_size": 2,
+                "no_repeat_ngram_size": 3,
+                "repetition_penalty": 1.1,
                 "early_stopping": True,
-                "generate_max_length": 100,
-                "num_beams": 4,
+                "generate_max_length": 120,
+                "num_beams": 5,
                 "batch_size": 32,
                 "remove_tokens": ["<usr>", f"{tokenizer.bos_token}", f"{tokenizer.eos_token}", f"{tokenizer.pad_token}"]
             }

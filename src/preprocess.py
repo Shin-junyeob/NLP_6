@@ -1,7 +1,94 @@
 import os
+import re
+import unicodedata
+from dataclasses import dataclass
 
 import pandas as pd
 from torch.utils.data import Dataset
+
+_CTRL = re.compile(r"[\u0000-\u001F\u007F]")
+
+def _normalize_text(text: str) -> str:
+    if text is None:
+        return ""
+
+    x = unicodedata.normalize("NFKC", text)
+    x = _CTRL.sub(" ". x)
+    x = x.replace("&nbsp;", " ").replace("&amp;", "&")
+    x = re.sub(r"\r\n|\r", "\n", x)
+    x = re.sub(r"[\.]{3,}", "…", x)
+    x = re.sub(r"[!]{2,}", "!", x)
+    x = re.sub(r"[?]{2,}", "?", x)
+    x = re.sub(r"[ \t]+", " ", x)
+    x = re.sub(r"\n{3,}", "\n\n", x)
+    return x.strip()
+
+def clean_dialogue_min(text: str) -> str:
+    x = _normalize_text(text)
+    x = re.sub(r"#\s*Person\s*1\s*#?", "[P1]", x, flags=re.IGNORECASE)
+    x = re.sub(r"#\s*Person\s*2\s*#?", "[P2]", x, flags=re.IGNORECASE)
+    x = re.sub(r"#\s*Person\s*3\s*#?", "[P3]", x, flags=re.IGNORECASE)
+
+    x = re.sub(r"^\s*P1\s*:\s*", "[P1]: ", x, flags=re.IGNORECASE | re.MULTILINE)
+    x = re.sub(r"^\s*P2\s*:\s*", "[P2]: ", x, flags=re.IGNORECASE | re.MULTILINE)
+    x = re.sub(r"(\[P[123]\])\s*:\s*", r"\1: ", x)
+
+    lines = [ln.strip() for ln in x.split("\n") if ln.strip()]
+    return "\n".join(lines).strip()
+
+def clean_summary_min(text: str) -> str:
+    s = _normalize_text(text)
+    s = re.sub(r"\s+", " ", s).strip()
+    if not re.search(r"[\.!?…]$", s):
+        s += "."
+    return s
+
+@dataclass
+class LengthPolicy:
+    max_words: int = 768
+
+def truncate_dialogue_by_words(text: str, policy: LengthPolicy = LengthPolicy()) -> str:
+    words = text.split()
+    if len(words) <= policy.max_words:
+        return text
+    return " ".join(words[-policy.max_words:]).strip()
+
+def filter_dataframe_min(df: pd.DataFrame, is_test: bool=False) -> pd.DataFrame:
+    df = df.copy()
+    df["dialogue_len"] = df["dialogue"].str.len()
+    if not is_test and "summary" in df.columns:
+        df["summary_len"] = df["summary"].str.len()
+        df = df[(df["summary_len"] > 10) & (df["dialogue_len"] < 2000)]
+        df = df.drop(columns=["summary_len"])
+    else:
+        df = df[df["dialogue_len"] < 2000]
+    df = df.drop(columns=["dialogue_len"])
+    return df
+
+def apply_preprocess(df: pd.DataFrame, is_test: bool=False, max_words: int=512) -> pd.DataFrame:
+    df = filter_dataframe_min(df, is_test=is_test)
+    df = df.copy()
+    df["dialogue"] = df["dialogue"].apply(clean_dialogue_min)
+    df["dialogue"] = df["dialogue"].apply(lambda x: truncate_dialogue_by_words(x, LengthPolicy(max_words)))
+    if not is_test and "summary" in df.columns:
+        df["summary"] = df["summary"].apply(clean_summary_min)
+    return df
+
+def postprocess_summaries(summ_list):
+    out = []
+    for s in summ_list:
+        if s is None:
+            out.append("")
+            continue
+        s = re.sub(r"<\s*\/?\s*\w+\s*>", "", s)
+        s = s.replace("[P1]", "").replace("[P2]", "").replace("[P3]", "")
+        s = re.sub(r"\s+", " ", s).strip()
+        s = re.sub(r"([.]){2,}", ".", s)
+        s = re.sub(r"(…){2,}", "…", s)
+        if not re.search(r"[\.!?…]$", s):
+            s += "."
+        out.append(s)
+    return out
 
 class Preprocess:
     def __init__(self,
@@ -97,6 +184,9 @@ def prepare_train_dataset(config, preprocessor, tokenizer):
     train_data = preprocessor.make_set_as_df(train_path)
     val_data = preprocessor.make_set_as_df(val_path)
 
+    train_data = apply_preprocess(train_data, is_test=False, max_words=config["tokenizer"]["encoder_max_len"])
+    val_data = apply_preprocess(val_data, is_test=False, max_words=config["tokenizer"]["encoder_max_len"])
+
     encoder_input_train, decoder_input_train, decoder_output_train = preprocessor.make_input(train_data)
     encoder_input_val, decoder_input_val, decoder_output_val = preprocessor.make_input(val_data)
 
@@ -129,6 +219,7 @@ def prepare_train_dataset(config, preprocessor, tokenizer):
 def prepare_test_dataset(config, preprocessor, tokenizer):
     test_path = os.path.join(config["general"]["data_path"], "test.csv")
     test_data = preprocessor.make_set_as_df(test_path, is_train=False)
+    test_data = apply_preprocess(test_data, is_test=True, max_words=config["tokenizer"]["encoder_max_len"])
     test_id = test_data["fname"]
 
     encoder_input_test , decoder_input_test = preprocessor.make_input(test_data,is_test=True)
