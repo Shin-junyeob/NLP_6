@@ -44,10 +44,13 @@ NLP6/
 ├─ .env.sample
 └─ requirements.txt
 
-
-
-
 ```
+
+### How to Run🚀
+```bash
+user@user:~/NLP_6# python src/inference.py
+```
+
 
 <br>
 
