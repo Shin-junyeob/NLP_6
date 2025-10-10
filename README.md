@@ -28,6 +28,9 @@ NLP6/
 │
 ├─ data/                # Kernel Academy 경진대회 데이터 사용
 │
+├─ EDA/
+│   └─ main.py          # EDA
+│
 ├─ src/
 │   ├─ config.py        # Generate / Read config.yaml 
 │   ├─ utils.py         # Settings
@@ -46,9 +49,13 @@ NLP6/
 
 ```
 
-### How to Run🚀
+### How to Run 🚀
 ```bash
-user@user:~/NLP_6# python src/inference.py
+user@user:~/NLP_6# python EDA/main.py train > EDA/train_eda.csv      # train.csv 파일 EDA 및 저장
+user@user:~/NLP_6# python EDA/main.py dev > EDA/dev_eda.csv          # dev.csv 파일 EDA 및 저장
+
+
+user@user:~/NLP_6# python src/inference.py                           # 모델 학습 및 추론
 ```
 
 
