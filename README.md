@@ -44,18 +44,20 @@ NLP6/
 │   └─ predictions/
 │       └─ output.csv
 │
+├─ requirements.txt
+├─ .gitignore
 ├─ .env.sample
-└─ requirements.txt
+└─ README.md
 
 ```
 
 ### How to Run 🚀
 ```bash
-user@user:~/NLP_6# python EDA/main.py train > EDA/train_eda.csv      # train.csv 파일 EDA 및 저장
-user@user:~/NLP_6# python EDA/main.py dev > EDA/dev_eda.csv          # dev.csv 파일 EDA 및 저장
+user@user:~/NLP_6# python EDA/main.py train > EDA/train_eda.csv      # train.csv 파일 EDA 및 저장 / 저장경로는 사용자 편의에 따라 변경
+user@user:~/NLP_6# python EDA/main.py dev > EDA/dev_eda.csv          # dev.csv 파일 EDA 및 저장 / 저장경로는 사용자 편의에 따라 변경
 
 
-user@user:~/NLP_6# python src/inference.py                           # 모델 학습 및 추론
+user@user:~/NLP_6# python src/inference.py {version}                 # v1, ver2, ver_3, test 등 사용자 편의에 따라 변경 / 공백 Default값은 "test"
 ```
 
 
