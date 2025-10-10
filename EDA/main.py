@@ -21,7 +21,7 @@ def rouge_1_sample(row):
         return float(score)
 
 def simple_eda(is_train: str = 'train'):
-    path = f'../data/{is_train}.csv'
+    path = f'./data/{is_train}.csv'
     target = pd.read_csv(path)
 
     target['dialogue_len'] = target['dialogue'].str.len()
