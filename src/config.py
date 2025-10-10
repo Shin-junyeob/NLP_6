@@ -2,7 +2,7 @@ import yaml
 
 from transformers import AutoTokenizer
 
-def config_info():
+def config_info(version: str = "test"):
     config_path = "./config/config.yaml"
     def _config_info():
         MODEL_NAME = "digit82/kobart-summarization"
@@ -12,7 +12,7 @@ def config_info():
             "general": {
                 "data_path": "./data/",
                 "model_name": MODEL_NAME,
-                "output_dir": f"./outputs/checkpoints/{MODEL_NAME}/"
+                "output_dir": f"./outputs/checkpoints/{MODEL_NAME}/{version}/"
             },
             "tokenizer": {
                 "encoder_max_len": 768,
@@ -52,11 +52,11 @@ def config_info():
             "wandb": {
                 "entity": "junyub029-github",
                 "project": "nlp_project",
-                "name": "baseline_code"
+                "name": "digit82"
             },
             "inference": {
-                "ckpt_path": f"./outputs/checkpoints/{MODEL_NAME}",
-                "result_path": f"./outputs/prediction/{MODEL_NAME}/",
+                "ckpt_path": f"./outputs/checkpoints/{MODEL_NAME}/{version}",
+                "result_path": f"./outputs/prediction/{MODEL_NAME}/{version}",
                 "no_repeat_ngram_size": 3,
                 "repetition_penalty": 1.1,
                 "early_stopping": True,

@@ -13,7 +13,7 @@ def _normalize_text(text: str) -> str:
         return ""
 
     x = unicodedata.normalize("NFKC", text)
-    x = _CTRL.sub(" ". x)
+    x = _CTRL.sub(" ", x)
     x = x.replace("&nbsp;", " ").replace("&amp;", "&")
     x = re.sub(r"\r\n|\r", "\n", x)
     x = re.sub(r"[\.]{3,}", "…", x)
@@ -55,24 +55,25 @@ def truncate_dialogue_by_words(text: str, policy: LengthPolicy = LengthPolicy())
 
 def filter_dataframe_min(df: pd.DataFrame, is_test: bool=False) -> pd.DataFrame:
     df = df.copy()
+    if is_test:
+        return df.reset_index(drop=True)
+
     df["dialogue_len"] = df["dialogue"].str.len()
-    if not is_test and "summary" in df.columns:
+    if "summary" in df.columns:
         df["summary_len"] = df["summary"].str.len()
         df = df[(df["summary_len"] > 10) & (df["dialogue_len"] < 2000)]
         df = df.drop(columns=["summary_len"])
-    else:
-        df = df[df["dialogue_len"] < 2000]
     df = df.drop(columns=["dialogue_len"])
-    return df
+    return df.reset_index(drop=True)
 
 def apply_preprocess(df: pd.DataFrame, is_test: bool=False, max_words: int=512) -> pd.DataFrame:
-    df = filter_dataframe_min(df, is_test=is_test)
     df = df.copy()
     df["dialogue"] = df["dialogue"].apply(clean_dialogue_min)
     df["dialogue"] = df["dialogue"].apply(lambda x: truncate_dialogue_by_words(x, LengthPolicy(max_words)))
     if not is_test and "summary" in df.columns:
         df["summary"] = df["summary"].apply(clean_summary_min)
-    return df
+    df = filter_dataframe_min(df, is_test=is_test)
+    return df.reset_index(drop=True)
 
 def postprocess_summaries(summ_list):
     out = []
@@ -184,8 +185,8 @@ def prepare_train_dataset(config, preprocessor, tokenizer):
     train_data = preprocessor.make_set_as_df(train_path)
     val_data = preprocessor.make_set_as_df(val_path)
 
-    train_data = apply_preprocess(train_data, is_test=False, max_words=config["tokenizer"]["encoder_max_len"])
-    val_data = apply_preprocess(val_data, is_test=False, max_words=config["tokenizer"]["encoder_max_len"])
+    train_data = apply_preprocess(train_data, is_test=False, max_words=config["tokenizer"]["encoder_max_len"]).reset_index(drop=True)
+    val_data = apply_preprocess(val_data, is_test=False, max_words=config["tokenizer"]["encoder_max_len"]).reset_index(drop=True)
 
     encoder_input_train, decoder_input_train, decoder_output_train = preprocessor.make_input(train_data)
     encoder_input_val, decoder_input_val, decoder_output_val = preprocessor.make_input(val_data)
@@ -220,7 +221,8 @@ def prepare_test_dataset(config, preprocessor, tokenizer):
     test_path = os.path.join(config["general"]["data_path"], "test.csv")
     test_data = preprocessor.make_set_as_df(test_path, is_train=False)
     test_data = apply_preprocess(test_data, is_test=True, max_words=config["tokenizer"]["encoder_max_len"])
-    test_id = test_data["fname"]
+    test_data = test_data.reset_index(drop=True)
+    test_id = test_data["fname"].tolist()
 
     encoder_input_test , decoder_input_test = preprocessor.make_input(test_data,is_test=True)
 

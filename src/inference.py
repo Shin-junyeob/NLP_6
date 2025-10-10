@@ -1,4 +1,5 @@
 import os
+import argparse
 
 import pandas as pd
 import torch
@@ -62,5 +63,8 @@ def main(config):
     return output
 
 if __name__ == "__main__":
-    config = config_info()
+    parser = argparse.ArgumentParser(description="Run train and inference for Dialogue Summarization.")
+    parser.add_argument("version", type=str, nargs="?", default="test")
+    args = parser.parse_args()
+    config = config_info(args.version)
     main(config)
